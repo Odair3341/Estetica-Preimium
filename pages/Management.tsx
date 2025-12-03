@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { Procedure, Client, PurchaseHistory, Product } from '../types';
-import { get } from '../utils/api';
+import { get } from '../src/utils/api';
 
 const Management: React.FC = () => {
   const navigate = useNavigate();
@@ -410,13 +410,13 @@ const Management: React.FC = () => {
                 <div className="text-center py-8 text-zinc-500">Sem compras registradas</div>
               ) : (
                 historyList.map(h => (
-                  <div 
+                  <div
                     key={h.id as any} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
                     <div className="flex items-center gap-3">
                       <span className={`material-symbols-outlined ${h.type === 'product' ? 'text-primary' : 'text-secondary'}`}>{h.type === 'product' ? 'shopping_bag' : 'spa'}</span>
                       <div>
                         <p className="font-medium text-zinc-900 dark:text-white">
-                          {h.type === 'product' 
+                          {h.type === 'product'
                             ? (products.find(p => p.id === String(h.product_id))?.name || `Produto #${h.product_id}`)
                             : (procedures.find(p => p.id === Number(h.service_id))?.name || `Serviço #${h.service_id}`)}
                         </p>

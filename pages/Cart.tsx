@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartItem, Client } from '../types';
 import PrimaryButton from '../components/PrimaryButton';
-import { post, get } from '../utils/api';
+import { post, get } from '../src/utils/api';
 
 const Cart: React.FC = () => {
   const navigate = useNavigate();
@@ -144,7 +144,7 @@ const Cart: React.FC = () => {
         try {
           const res = await get(`/api/appointments/client/${selectedClient.id}`);
           if (!res.ok) throw new Error('Falha ao confirmar agendamentos');
-        } catch {}
+        } catch { }
       }
       setShowSuccess(true);
       // Clear cart after delay
@@ -167,7 +167,7 @@ const Cart: React.FC = () => {
         </div>
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Compra Realizada!</h2>
         <p className="text-zinc-500 dark:text-zinc-400 text-center">
-          Venda registrada para {selectedClient?.name}.<br/>
+          Venda registrada para {selectedClient?.name}.<br />
           Seu pedido foi processado com sucesso.
         </p>
         <div className="mt-6 flex gap-3">
