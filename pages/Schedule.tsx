@@ -15,8 +15,12 @@ const Schedule: React.FC = () => {
       setIsLoading(true);
       try {
         const res = await fetch('http://localhost:3001/api/appointments');
-        const data = await res.json();
-        setAppointments(data);
+        if (res.ok) {
+          const data = await res.json();
+          setAppointments(data);
+        } else {
+          setAppointments([]);
+        }
       } catch (e) {
         console.error('Erro ao carregar agendamentos:', e);
       } finally {

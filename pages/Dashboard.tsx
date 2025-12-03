@@ -21,11 +21,15 @@ const Dashboard: React.FC = () => {
     const fetchAll = async () => {
       try {
         const [aptsRes, productsRes, historyRes] = await Promise.all([
-          fetch('http://localhost:3001/api/appointments'),
+          fetch('http://localhost:3001/api/appointments').catch(() => null),
           fetch('http://localhost:3001/api/products'),
           fetch('http://localhost:3001/api/purchase-history')
         ]);
-        setAppointments(await aptsRes.json());
+        if (aptsRes && aptsRes.ok) {
+          setAppointments(await aptsRes.json());
+        } else {
+          setAppointments([]);
+        }
         setProducts(await productsRes.json());
         setPurchaseHistory(await historyRes.json());
       } catch (e) {
