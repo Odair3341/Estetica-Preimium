@@ -7,7 +7,7 @@ const Cart: React.FC = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   // Estado para busca de cliente
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Client[]>([]);
@@ -29,22 +29,22 @@ const Cart: React.FC = () => {
 
   const fetchInitialClients = async () => {
     try {
-        const response = await fetch('http://localhost:3001/api/clients');
-        if (response.ok) {
-            const data = await response.json();
-            // Pegar apenas os primeiros 10 para não poluir
-            setSearchResults(data.slice(0, 10));
-        }
+      const response = await fetch('http://localhost:3001/api/clients');
+      if (response.ok) {
+        const data = await response.json();
+        // Pegar apenas os primeiros 10 para não poluir
+        setSearchResults(data.slice(0, 10));
+      }
     } catch (error) {
-        console.error('Erro ao buscar clientes iniciais:', error);
+      console.error('Erro ao buscar clientes iniciais:', error);
     }
   };
 
   // Efeito para buscar clientes com debounce
   useEffect(() => {
     if (searchQuery.length === 0) {
-        fetchInitialClients();
-        return;
+      fetchInitialClients();
+      return;
     }
 
     if (searchQuery.length < 2) { // Reduzi para 2 caracteres para facilitar
@@ -76,7 +76,7 @@ const Cart: React.FC = () => {
       }
       return item;
     }).filter(item => item.quantity > 0);
-    
+
     setItems(newItems);
     localStorage.setItem('cart', JSON.stringify(newItems));
   };
@@ -89,28 +89,36 @@ const Cart: React.FC = () => {
       return;
     }
 
+    if (scheduleEnabled) {
+      if (!scheduleDate || !scheduleTime || !scheduleProfessional) {
+        alert('Para agendar, preencha Data, Hora e Profissional.');
+        return;
+      }
+    }
+
     try {
       // Criar registro de histórico de compra para cada item
       // Em um cenário real, faríamos um endpoint de "venda" que lida com tudo em transação
       // Aqui vamos simular chamando o endpoint de histórico
       const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       // Processar cada item do carrinho
       for (const item of items) {
         const bodyData: any = {
           client_id: selectedClient.id,
           amount: item.price * item.quantity,
           date: date,
-          type: item.type || 'product'
+          type: item.type || 'product',
+          quantity: item.quantity
         };
 
         // Vincular o ID correto dependendo do tipo
         if (item.type === 'service') {
-            // Assumindo que item.id para services é numérico ou string de número
-            bodyData.service_id = parseInt(item.id);
+          // Assumindo que item.id para services é numérico ou string de número
+          bodyData.service_id = parseInt(item.id);
         } else {
-            // Assumindo p1, p2... remove 'p'
-            bodyData.product_id = parseInt(item.id.replace('p', ''));
+          // Assumindo p1, p2... remove 'p'
+          bodyData.product_id = parseInt(item.id.replace('p', ''));
         }
 
         await fetch('http://localhost:3001/api/purchase-history', {
@@ -143,7 +151,7 @@ const Cart: React.FC = () => {
       setTimeout(() => {
         localStorage.removeItem('cart');
         setItems([]);
-        navigate('/dashboard');
+        navigate(scheduleEnabled ? '/schedule' : '/dashboard');
       }, 2500);
     } catch (error) {
       console.error('Erro ao finalizar venda:', error);
@@ -162,6 +170,10 @@ const Cart: React.FC = () => {
           Venda registrada para {selectedClient?.name}.<br/>
           Seu pedido foi processado com sucesso.
         </p>
+        <div className="mt-6 flex gap-3">
+          <button onClick={() => navigate('/schedule')} className="px-4 py-2 rounded-full bg-primary text-white font-bold">Ver Agenda</button>
+          <button onClick={() => navigate('/management')} className="px-4 py-2 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white font-bold">Ver Gestão</button>
+        </div>
       </div>
     );
   }
@@ -182,7 +194,7 @@ const Cart: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-[60vh] opacity-50">
             <span className="material-symbols-outlined text-6xl mb-4">production_quantity_limits</span>
             <p className="text-lg font-medium">Seu carrinho está vazio</p>
-            <button 
+            <button
               onClick={() => navigate('/store')}
               className="mt-6 text-primary font-bold underline"
             >
@@ -197,14 +209,14 @@ const Cart: React.FC = () => {
                 <span className="material-symbols-outlined text-primary">person</span>
                 Cliente
               </h3>
-              
+
               {selectedClient ? (
                 <div className="flex items-center justify-between bg-primary/10 p-3 rounded-lg border border-primary/20">
                   <div>
                     <p className="font-bold text-zinc-900 dark:text-white">{selectedClient.name}</p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">{selectedClient.email}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => { setSelectedClient(null); setSearchQuery(''); }}
                     className="text-primary hover:bg-primary/10 p-2 rounded-full"
                   >
@@ -232,22 +244,22 @@ const Cart: React.FC = () => {
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 z-20 max-h-60 overflow-y-auto">
                       {searchResults.length > 0 ? (
                         searchResults.map(client => (
-                        <button
-                          key={client.id}
-                          onClick={() => {
-                            setSelectedClient(client);
-                            // setSearchResults([]); // Comentei para manter a lista disponível se ele remover
-                          }}
-                          className="w-full text-left p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-b border-zinc-100 dark:border-zinc-800 last:border-0 flex flex-col"
-                        >
-                          <span className="font-bold text-sm text-zinc-900 dark:text-white">{client.name}</span>
-                          <span className="text-xs text-zinc-500">{client.email} • {client.phone}</span>
-                        </button>
+                          <button
+                            key={client.id}
+                            onClick={() => {
+                              setSelectedClient(client);
+                              // setSearchResults([]); // Comentei para manter a lista disponível se ele remover
+                            }}
+                            className="w-full text-left p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-b border-zinc-100 dark:border-zinc-800 last:border-0 flex flex-col"
+                          >
+                            <span className="font-bold text-sm text-zinc-900 dark:text-white">{client.name}</span>
+                            <span className="text-xs text-zinc-500">{client.email} • {client.phone}</span>
+                          </button>
                         ))
                       ) : (
-                         searchQuery.length >= 2 && !isSearching && (
-                            <div className="p-3 text-sm text-zinc-500 text-center">Nenhum cliente encontrado</div>
-                         )
+                        searchQuery.length >= 2 && !isSearching && (
+                          <div className="p-3 text-sm text-zinc-500 text-center">Nenhum cliente encontrado</div>
+                        )
                       )}
                     </div>
                   )}
@@ -295,7 +307,7 @@ const Cart: React.FC = () => {
               <h3 className="font-bold text-zinc-900 dark:text-white px-1">Itens do Pedido</h3>
               {items.map(item => (
                 <div key={item.id} className="flex gap-4 p-3 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-800/50">
-                  <div 
+                  <div
                     className="h-24 w-20 rounded-lg bg-cover bg-center shrink-0"
                     style={{ backgroundImage: `url("${item.imageUrl}")` }}
                   ></div>
@@ -307,14 +319,14 @@ const Cart: React.FC = () => {
                     <div className="flex items-end justify-between">
                       <span className="font-bold text-primary">R$ {item.price.toFixed(2)}</span>
                       <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800 rounded-full px-2 py-1">
-                        <button 
+                        <button
                           onClick={() => updateQuantity(item.id, -1)}
                           className="size-6 flex items-center justify-center text-zinc-600 dark:text-zinc-400"
                         >
                           <span className="material-symbols-outlined text-sm">remove</span>
                         </button>
                         <span className="text-sm font-bold min-w-[1rem] text-center">{item.quantity}</span>
-                        <button 
+                        <button
                           onClick={() => updateQuantity(item.id, 1)}
                           className="size-6 flex items-center justify-center text-zinc-600 dark:text-zinc-400"
                         >
@@ -336,7 +348,7 @@ const Cart: React.FC = () => {
             <span className="text-zinc-500 dark:text-zinc-400">Total</span>
             <span className="text-2xl font-bold text-zinc-900 dark:text-white">R$ {total.toFixed(2)}</span>
           </div>
-          <PrimaryButton 
+          <PrimaryButton
             onClick={handleCheckout}
             icon="arrow_forward"
             disabled={!selectedClient}

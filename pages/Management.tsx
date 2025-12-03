@@ -5,13 +5,14 @@ import { Procedure, Client, PurchaseHistory, Product } from '../types';
 
 const Management: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'procedures' | 'products' | 'clients' | 'history'>('procedures');
+  const [activeTab, setActiveTab] = useState<'procedures' | 'products' | 'clients' | 'history'>('clients');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showClientHistory, setShowClientHistory] = useState<Client | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [historyList, setHistoryList] = useState<PurchaseHistory[]>([]);
+  const [clientPackages, setClientPackages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Estados para formulários
@@ -92,6 +93,17 @@ const Management: React.FC = () => {
     }
   };
 
+  const fetchClientPackages = async (clientId: number) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/clients/${clientId}/packages`);
+      const data = await res.json();
+      setClientPackages(data);
+    } catch (e) {
+      console.error('Erro ao carregar pacotes do cliente:', e);
+      setClientPackages([]);
+    }
+  };
+
   const fetchClients = async () => {
     try {
       const res = await fetch('http://localhost:3001/api/clients');
@@ -130,13 +142,13 @@ const Management: React.FC = () => {
 
   const getProductName = (productId?: string) => {
     if (!productId) return '';
-    const product = PRODUCTS.find(p => p.id === productId);
+    const product = products.find(p => p.id === productId);
     return product ? product.name : '';
   };
 
   const getServiceName = (serviceId?: string) => {
     if (!serviceId) return '';
-    const procedure = PROCEDURES.find(p => p.id === serviceId);
+    const procedure = procedures.find(p => p.id === serviceId);
     return procedure ? procedure.name : '';
   };
 
@@ -144,7 +156,7 @@ const Management: React.FC = () => {
     <div className="relative flex h-auto min-h-screen w-full flex-col pb-24">
       <header className="sticky top-0 z-10 flex items-center justify-between bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md pt-4 px-4 pb-2 border-b border-zinc-200 dark:border-zinc-800">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Gestão</h1>
-        <button 
+        <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white hover:bg-opacity-90 transition-all"
         >
@@ -156,41 +168,37 @@ const Management: React.FC = () => {
       <div className="flex p-1 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-xl mx-4 mt-4">
         <button
           onClick={() => setActiveTab('procedures')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            activeTab === 'procedures' 
-              ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm' 
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'procedures'
+            ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm'
+            : 'text-zinc-500 dark:text-zinc-400'
+            }`}
         >
           Procedimentos
         </button>
         <button
           onClick={() => setActiveTab('products')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            activeTab === 'products' 
-              ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm' 
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'products'
+            ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm'
+            : 'text-zinc-500 dark:text-zinc-400'
+            }`}
         >
           Produtos
         </button>
         <button
           onClick={() => setActiveTab('clients')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            activeTab === 'clients' 
-              ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm' 
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'clients'
+            ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm'
+            : 'text-zinc-500 dark:text-zinc-400'
+            }`}
         >
           Clientes
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            activeTab === 'history' 
-              ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm' 
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'history'
+            ? 'bg-white dark:bg-zinc-800 text-primary shadow-sm'
+            : 'text-zinc-500 dark:text-zinc-400'
+            }`}
         >
           Histórico
         </button>
@@ -209,8 +217,8 @@ const Management: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-3">
                 {procedures.map(procedure => (
-                  <div 
-                    key={procedure.id} 
+                  <div
+                    key={procedure.id}
                     className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800"
                   >
                     <div className="flex flex-col">
@@ -240,11 +248,11 @@ const Management: React.FC = () => {
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {products.map(product => (
-                  <div 
-                    key={product.id} 
+                  <div
+                    key={product.id}
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden"
                   >
-                    <div 
+                    <div
                       className="aspect-square bg-cover bg-center"
                       style={{ backgroundImage: `url("${product.imageUrl}")` }}
                     ></div>
@@ -276,8 +284,8 @@ const Management: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-3">
                 {clients.map(client => (
-                  <div 
-                    key={client.id} 
+                  <div
+                    key={client.id}
                     className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800"
                   >
                     <div className="flex flex-col">
@@ -290,8 +298,12 @@ const Management: React.FC = () => {
                       <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
                         {client.loyaltyPoints} pts
                       </span>
-                      <button 
-                        onClick={() => { setShowClientHistory(client); fetchClientHistory(client.id as unknown as number); }}
+                      <button
+                        onClick={() => {
+                          setShowClientHistory(client);
+                          fetchClientHistory(client.id as unknown as number);
+                          fetchClientPackages(client.id as unknown as number);
+                        }}
                         className="p-2 text-zinc-500 hover:text-primary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"
                       >
                         <span className="material-symbols-outlined text-lg">history</span>
@@ -315,13 +327,13 @@ const Management: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-3">
                 {historyList.map(history => (
-                  <div 
-                    key={history.id} 
+                  <div
+                    key={history.id}
                     className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800"
                   >
                     <div className="flex flex-col">
                       <p className="font-medium text-zinc-900 dark:text-white">
-                        {history.type === 'product' 
+                        {history.type === 'product'
                           ? (products.find(p => p.id === String(history.product_id))?.name || `Produto #${history.product_id}`)
                           : (procedures.find(p => p.id === Number(history.service_id))?.name || `Serviço #${history.service_id}`)}
                       </p>
@@ -350,6 +362,39 @@ const Management: React.FC = () => {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
+
+            {/* Packages Section */}
+            <div className="mb-6">
+              <h3 className="font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">inventory_2</span>
+                Pacotes Ativos
+              </h3>
+              <div className="flex flex-col gap-2">
+                {clientPackages.length === 0 ? (
+                  <p className="text-sm text-zinc-500 italic">Nenhum pacote ativo</p>
+                ) : (
+                  clientPackages.map((pkg: any) => (
+                    <div key={pkg.id} className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-zinc-900 dark:text-white">{pkg.service_name}</p>
+                        <p className="text-xs text-zinc-500">Comprado em {new Date(pkg.purchase_date).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-primary">
+                          {pkg.total_sessions - pkg.used_sessions} / {pkg.total_sessions}
+                        </p>
+                        <p className="text-[10px] text-zinc-500 uppercase">Sessões Restantes</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <h3 className="font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+              <span className="material-symbols-outlined text-zinc-500">receipt_long</span>
+              Histórico de Compras
+            </h3>
             <div className="flex flex-col gap-3">
               {isLoading ? (
                 <div className="text-center py-8 text-zinc-500">Carregando...</div>
@@ -360,7 +405,7 @@ const Management: React.FC = () => {
                   <div key={h.id as any} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
                     <div>
                       <p className="font-medium text-zinc-900 dark:text-white">
-                        {h.type === 'product' 
+                        {h.type === 'product'
                           ? (products.find(p => p.id === String(h.product_id))?.name || `Produto #${h.product_id}`)
                           : (procedures.find(p => p.id === Number(h.service_id))?.name || `Serviço #${h.service_id}`)}
                       </p>
@@ -384,14 +429,14 @@ const Management: React.FC = () => {
                 {activeTab === 'clients' && 'Novo Cliente'}
                 {activeTab === 'history' && 'Novo Registro'}
               </h2>
-              <button 
+              <button
                 onClick={() => setShowAddModal(false)}
                 className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            
+
             <div className="flex flex-col gap-4">
               {activeTab === 'procedures' && (
                 <>
@@ -402,25 +447,25 @@ const Management: React.FC = () => {
                     <input
                       type="text"
                       value={newProcedure.name}
-                      onChange={(e) => setNewProcedure({...newProcedure, name: e.target.value})}
+                      onChange={(e) => setNewProcedure({ ...newProcedure, name: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       placeholder="Ex: Limpeza de Pele"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Descrição
                     </label>
                     <textarea
                       value={newProcedure.description}
-                      onChange={(e) => setNewProcedure({...newProcedure, description: e.target.value})}
+                      onChange={(e) => setNewProcedure({ ...newProcedure, description: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       placeholder="Descrição detalhada do procedimento"
                       rows={3}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -429,12 +474,12 @@ const Management: React.FC = () => {
                       <input
                         type="number"
                         value={newProcedure.price || ''}
-                        onChange={(e) => setNewProcedure({...newProcedure, price: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => setNewProcedure({ ...newProcedure, price: parseFloat(e.target.value) || 0 })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                         placeholder="0,00"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                         Duração (min)
@@ -442,20 +487,20 @@ const Management: React.FC = () => {
                       <input
                         type="number"
                         value={newProcedure.duration || ''}
-                        onChange={(e) => setNewProcedure({...newProcedure, duration: parseInt(e.target.value) || 30})}
+                        onChange={(e) => setNewProcedure({ ...newProcedure, duration: parseInt(e.target.value) || 30 })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                         placeholder="30"
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Categoria
                     </label>
                     <select
                       value={newProcedure.category}
-                      onChange={(e) => setNewProcedure({...newProcedure, category: e.target.value})}
+                      onChange={(e) => setNewProcedure({ ...newProcedure, category: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                     >
                       <option value="">Selecione</option>
@@ -465,7 +510,7 @@ const Management: React.FC = () => {
                       <option value="Cabelo">Cabelo</option>
                     </select>
                   </div>
-                  
+
                   <button
                     onClick={handleAddProcedure}
                     className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-opacity-90 transition-all"
@@ -474,7 +519,7 @@ const Management: React.FC = () => {
                   </button>
                 </>
               )}
-              
+
               {activeTab === 'products' && (
                 <>
                   <div>
@@ -484,12 +529,12 @@ const Management: React.FC = () => {
                     <input
                       type="text"
                       value={newProduct.name}
-                      onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       placeholder="Ex: Vestido Floral"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -498,19 +543,19 @@ const Management: React.FC = () => {
                       <input
                         type="number"
                         value={newProduct.price || ''}
-                        onChange={(e) => setNewProduct({...newProduct, price: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                         placeholder="0,00"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                         Categoria
                       </label>
                       <select
                         value={newProduct.category}
-                        onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       >
                         <option value="">Selecione</option>
@@ -522,7 +567,7 @@ const Management: React.FC = () => {
                       </select>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       URL da Imagem
@@ -530,25 +575,25 @@ const Management: React.FC = () => {
                     <input
                       type="text"
                       value={newProduct.imageUrl}
-                      onChange={(e) => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       placeholder="https://..."
                     />
                   </div>
-                  
+
                   <div className="flex items-center">
                     <input
                       type="checkbox"
                       id="isNew"
                       checked={newProduct.isNew}
-                      onChange={(e) => setNewProduct({...newProduct, isNew: e.target.checked})}
+                      onChange={(e) => setNewProduct({ ...newProduct, isNew: e.target.checked })}
                       className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary"
                     />
                     <label htmlFor="isNew" className="ml-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                       Marcar como novo produto
                     </label>
                   </div>
-                  
+
                   <button
                     onClick={handleAddProduct}
                     className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-opacity-90 transition-all"
@@ -557,7 +602,7 @@ const Management: React.FC = () => {
                   </button>
                 </>
               )}
-              
+
               {activeTab === 'clients' && (
                 <>
                   <div>
@@ -567,12 +612,12 @@ const Management: React.FC = () => {
                     <input
                       type="text"
                       value={newClient.name}
-                      onChange={(e) => setNewClient({...newClient, name: e.target.value})}
+                      onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       placeholder="Ex: Maria Silva"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -581,12 +626,12 @@ const Management: React.FC = () => {
                       <input
                         type="email"
                         value={newClient.email}
-                        onChange={(e) => setNewClient({...newClient, email: e.target.value})}
+                        onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                         placeholder="exemplo@email.com"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                         Telefone
@@ -594,13 +639,13 @@ const Management: React.FC = () => {
                       <input
                         type="tel"
                         value={newClient.phone}
-                        onChange={(e) => setNewClient({...newClient, phone: e.target.value})}
+                        onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                         placeholder="(00) 00000-0000"
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -609,11 +654,11 @@ const Management: React.FC = () => {
                       <input
                         type="date"
                         value={newClient.birthDate}
-                        onChange={(e) => setNewClient({...newClient, birthDate: e.target.value})}
+                        onChange={(e) => setNewClient({ ...newClient, birthDate: e.target.value })}
                         className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                         Pontos de Fidelidade
@@ -627,7 +672,7 @@ const Management: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Endereço
@@ -635,12 +680,12 @@ const Management: React.FC = () => {
                     <input
                       type="text"
                       value={newClient.address}
-                      onChange={(e) => setNewClient({...newClient, address: e.target.value})}
+                      onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
                       className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                       placeholder="Rua, número, bairro, cidade"
                     />
                   </div>
-                  
+
                   <button
                     onClick={handleAddClient}
                     className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-opacity-90 transition-all"
@@ -649,7 +694,7 @@ const Management: React.FC = () => {
                   </button>
                 </>
               )}
-              
+
               {activeTab === 'history' && (
                 <>
                   <div className="mb-4">
@@ -658,12 +703,12 @@ const Management: React.FC = () => {
                     </label>
                     <select className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white">
                       <option value="">Todos os clientes</option>
-                      {CLIENTS.map(client => (
+                      {clients.map(client => (
                         <option key={client.id} value={client.id}>{client.name}</option>
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Período
@@ -681,16 +726,16 @@ const Management: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
                     {historyList.map(history => (
-                      <div 
-                        key={history.id} 
+                      <div
+                        key={history.id}
                         className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
                       >
                         <div className="flex flex-col">
                           <p className="font-medium text-zinc-900 dark:text-white">
-                            {history.type === 'product' 
+                            {history.type === 'product'
                               ? (products.find(p => p.id === String(history.product_id))?.name || `Produto #${history.product_id}`)
                               : (procedures.find(p => p.id === Number(history.service_id))?.name || `Serviço #${history.service_id}`)}
                           </p>
@@ -704,7 +749,7 @@ const Management: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <button
                     className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-opacity-90 transition-all mt-4"
                   >
@@ -725,14 +770,14 @@ const Management: React.FC = () => {
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
                 Histórico de {showClientHistory.name}
               </h2>
-              <button 
+              <button
                 onClick={() => setShowClientHistory(null)}
                 className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            
+
             <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
               {historyList.length === 0 ? (
                 <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
@@ -741,13 +786,13 @@ const Management: React.FC = () => {
                 </div>
               ) : (
                 historyList.map(history => (
-                  <div 
-                    key={history.id} 
+                  <div
+                    key={history.id}
                     className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
                   >
                     <div className="flex flex-col">
                       <p className="font-medium text-zinc-900 dark:text-white">
-                        {history.type === 'product' 
+                        {history.type === 'product'
                           ? (products.find(p => p.id === String(history.product_id))?.name || `Produto #${history.product_id}`)
                           : (procedures.find(p => p.id === Number(history.service_id))?.name || `Serviço #${history.service_id}`)}
                       </p>
