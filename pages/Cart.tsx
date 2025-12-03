@@ -19,12 +19,31 @@ const Cart: React.FC = () => {
     if (savedCart) {
       setItems(JSON.parse(savedCart));
     }
+    // Carregar clientes iniciais (para o usuário ver quem existe)
+    fetchInitialClients();
   }, []);
+
+  const fetchInitialClients = async () => {
+    try {
+        const response = await fetch('http://localhost:3001/api/clients');
+        if (response.ok) {
+            const data = await response.json();
+            // Pegar apenas os primeiros 10 para não poluir
+            setSearchResults(data.slice(0, 10));
+        }
+    } catch (error) {
+        console.error('Erro ao buscar clientes iniciais:', error);
+    }
+  };
 
   // Efeito para buscar clientes com debounce
   useEffect(() => {
-    if (searchQuery.length < 3) {
-      setSearchResults([]);
+    if (searchQuery.length === 0) {
+        fetchInitialClients();
+        return;
+    }
+
+    if (searchQuery.length < 2) { // Reduzi para 2 caracteres para facilitar
       return;
     }
 
@@ -74,16 +93,26 @@ const Cart: React.FC = () => {
       
       // Processar cada item do carrinho
       for (const item of items) {
+        const bodyData: any = {
+          client_id: selectedClient.id,
+          amount: item.price * item.quantity,
+          date: date,
+          type: item.type || 'product'
+        };
+
+        // Vincular o ID correto dependendo do tipo
+        if (item.type === 'service') {
+            // Assumindo que item.id para services é numérico ou string de número
+            bodyData.service_id = parseInt(item.id);
+        } else {
+            // Assumindo p1, p2... remove 'p'
+            bodyData.product_id = parseInt(item.id.replace('p', ''));
+        }
+
         await fetch('http://localhost:3001/api/purchase-history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            client_id: selectedClient.id,
-            product_id: parseInt(item.id.replace('p', '')), // Assumindo IDs p1, p2... converter para int
-            amount: item.price * item.quantity,
-            date: date,
-            type: 'product'
-          })
+          body: JSON.stringify(bodyData)
         });
       }
 
@@ -177,26 +206,28 @@ const Cart: React.FC = () => {
                   </div>
 
                   {/* Resultados da busca */}
-                  {searchResults.length > 0 && (
+                  {!selectedClient && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 z-20 max-h-60 overflow-y-auto">
-                      {searchResults.map(client => (
+                      {searchResults.length > 0 ? (
+                        searchResults.map(client => (
                         <button
                           key={client.id}
                           onClick={() => {
                             setSelectedClient(client);
-                            setSearchResults([]);
+                            // setSearchResults([]); // Comentei para manter a lista disponível se ele remover
                           }}
                           className="w-full text-left p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-b border-zinc-100 dark:border-zinc-800 last:border-0 flex flex-col"
                         >
                           <span className="font-bold text-sm text-zinc-900 dark:text-white">{client.name}</span>
                           <span className="text-xs text-zinc-500">{client.email} • {client.phone}</span>
                         </button>
-                      ))}
+                        ))
+                      ) : (
+                         searchQuery.length >= 2 && !isSearching && (
+                            <div className="p-3 text-sm text-zinc-500 text-center">Nenhum cliente encontrado</div>
+                         )
+                      )}
                     </div>
-                  )}
-                  
-                  {searchQuery.length >= 3 && searchResults.length === 0 && !isSearching && (
-                     <div className="mt-2 text-center p-2 text-sm text-zinc-500">Nenhum cliente encontrado</div>
                   )}
                 </div>
               )}
