@@ -255,6 +255,13 @@ const Store: React.FC = () => {
       )}
 
       <BottomNav />
+      {/* Floating Cart Button */}
+      <button 
+        onClick={() => navigate('/cart')}
+        className="fixed bottom-24 right-4 h-12 w-12 bg-primary text-white rounded-full shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40"
+      >
+        <span className="material-symbols-outlined">shopping_cart</span>
+      </button>
     </div>
   );
 };

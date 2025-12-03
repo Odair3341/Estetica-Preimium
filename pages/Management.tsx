@@ -683,7 +683,7 @@ const Management: React.FC = () => {
                   </div>
                   
                   <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
-                    {PURCHASE_HISTORY.map(history => (
+                    {historyList.map(history => (
                       <div 
                         key={history.id} 
                         className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
@@ -691,15 +691,15 @@ const Management: React.FC = () => {
                         <div className="flex flex-col">
                           <p className="font-medium text-zinc-900 dark:text-white">
                             {history.type === 'product' 
-                              ? getProductName(history.productId) 
-                              : getServiceName(history.serviceId)}
+                              ? (products.find(p => p.id === String(history.product_id))?.name || `Produto #${history.product_id}`)
+                              : (procedures.find(p => p.id === Number(history.service_id))?.name || `Serviço #${history.service_id}`)}
                           </p>
                           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {CLIENTS.find(c => c.id === history.clientId)?.name} • {history.date}
+                            {clients.find(c => c.id === (history.client_id as any))?.name} • {history.date}
                           </p>
                         </div>
                         <div className={`text-right font-bold ${history.type === 'product' ? 'text-primary' : 'text-secondary'}`}>
-                          R$ {history.amount.toFixed(2)}
+                          R$ {Number(history.amount).toFixed(2)}
                         </div>
                       </div>
                     ))}
@@ -734,13 +734,13 @@ const Management: React.FC = () => {
             </div>
             
             <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
-              {getClientHistory(showClientHistory.id).length === 0 ? (
+              {historyList.length === 0 ? (
                 <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
                   <span className="material-symbols-outlined text-4xl mb-2">receipt_long</span>
                   <p>Nenhum histórico de compras</p>
                 </div>
               ) : (
-                getClientHistory(showClientHistory.id).map(history => (
+                historyList.map(history => (
                   <div 
                     key={history.id} 
                     className="flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
@@ -748,15 +748,15 @@ const Management: React.FC = () => {
                     <div className="flex flex-col">
                       <p className="font-medium text-zinc-900 dark:text-white">
                         {history.type === 'product' 
-                          ? getProductName(history.productId) 
-                          : getServiceName(history.serviceId)}
+                          ? (products.find(p => p.id === String(history.product_id))?.name || `Produto #${history.product_id}`)
+                          : (procedures.find(p => p.id === Number(history.service_id))?.name || `Serviço #${history.service_id}`)}
                       </p>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
                         {history.date} • {history.type === 'product' ? 'Produto' : 'Serviço'}
                       </p>
                     </div>
                     <div className={`text-right font-bold ${history.type === 'product' ? 'text-primary' : 'text-secondary'}`}>
-                      R$ {history.amount.toFixed(2)}
+                      R$ {Number(history.amount).toFixed(2)}
                     </div>
                   </div>
                 ))

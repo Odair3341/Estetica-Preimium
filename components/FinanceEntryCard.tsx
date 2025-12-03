@@ -19,7 +19,7 @@ const FinanceEntryCard: React.FC<FinanceEntryCardProps> = ({ entry, onEdit, onDe
         </p>
       </div>
       <div className={`text-right font-bold mr-3 ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-        {entry.type === 'income' ? '+' : '-'} R$ {entry.amount.toFixed(2)}
+        {entry.type === 'income' ? '+' : '-'} R$ {Number(entry.amount).toFixed(2)}
       </div>
       <div className="flex gap-2">
         <button 

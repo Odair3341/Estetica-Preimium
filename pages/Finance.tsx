@@ -29,7 +29,14 @@ const Finance: React.FC = () => {
       try {
         const res = await fetch('http://localhost:3001/api/financial-entries');
         const data = await res.json();
-        setFinancialEntries(data);
+        const mapped = data.map((e: any) => ({
+          ...e,
+          id: String(e.id),
+          amount: Number(e.amount),
+          date: new Date(e.date).toISOString().split('T')[0],
+          source: e.source as 'esthetic' | 'store'
+        }));
+        setFinancialEntries(mapped);
       } catch (e) {
         console.error('Erro ao carregar lançamentos financeiros:', e);
       }
