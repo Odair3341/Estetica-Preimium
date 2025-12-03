@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartItem, Client } from '../types';
 import PrimaryButton from '../components/PrimaryButton';
+import { post, get } from '../utils/api';
 
 const Cart: React.FC = () => {
   const navigate = useNavigate();
@@ -121,11 +122,7 @@ const Cart: React.FC = () => {
           bodyData.product_id = parseInt(item.id.replace('p', ''));
         }
 
-        await fetch('http://localhost:3001/api/purchase-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyData)
-        });
+        await post('/api/purchase-history', bodyData);
 
         // Se for serviço e agendamento estiver habilitado, criar agendamento
         if (item.type === 'service' && scheduleEnabled && scheduleDate && scheduleTime && scheduleProfessional) {
@@ -138,14 +135,17 @@ const Cart: React.FC = () => {
             status: 'upcoming' as const,
             price: item.price
           };
-          await fetch('http://localhost:3001/api/appointments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(aptPayload)
-          });
+          await post('/api/appointments', aptPayload);
         }
       }
 
+      // Confirmar agendamentos criados (se habilitado)
+      if (scheduleEnabled) {
+        try {
+          const res = await get(`/api/appointments/client/${selectedClient.id}`);
+          if (!res.ok) throw new Error('Falha ao confirmar agendamentos');
+        } catch {}
+      }
       setShowSuccess(true);
       // Clear cart after delay
       setTimeout(() => {

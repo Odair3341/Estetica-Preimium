@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { Appointment } from '../types';
+import { get } from '../utils/api';
 import AppointmentCard from '../components/AppointmentCard';
 
 const Schedule: React.FC = () => {
@@ -14,7 +15,7 @@ const Schedule: React.FC = () => {
     const fetchAppointments = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch('http://localhost:3001/api/appointments');
+        const res = await get('/api/appointments');
         if (res.ok) {
           const data = await res.json();
           setAppointments(data);

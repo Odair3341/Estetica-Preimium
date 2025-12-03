@@ -56,8 +56,8 @@ const BottomNav: React.FC = () => {
           onClick={() => navigate('/management')}
           className={`flex flex-col items-center justify-center gap-1 w-full ${getTabColor('/management')}`}
         >
-          <span className="material-symbols-outlined">settings</span>
-          <span className="text-[10px] font-medium">Gestão</span>
+          <span className="material-symbols-outlined">admin_panel_settings</span>
+          <span className="text-[10px] font-bold">Gestão</span>
         </button>
       </div>
     </nav>

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { CURRENT_USER } from '../constants';
+import { get } from '../utils/api';
 import FinanceCard from '../components/FinanceCard';
 
 const Dashboard: React.FC = () => {
@@ -21,9 +22,9 @@ const Dashboard: React.FC = () => {
     const fetchAll = async () => {
       try {
         const [aptsRes, productsRes, historyRes] = await Promise.all([
-          fetch('http://localhost:3001/api/appointments').catch(() => null),
-          fetch('http://localhost:3001/api/products'),
-          fetch('http://localhost:3001/api/purchase-history')
+          get('/api/appointments').catch(() => null),
+          get('/api/products'),
+          get('/api/purchase-history')
         ]);
         if (aptsRes && aptsRes.ok) {
           setAppointments(await aptsRes.json());

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { Product, CartItem, Procedure } from '../types';
 import ProductCard from '../components/ProductCard';
+import { get } from '../utils/api';
 
 const Store: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const Store: React.FC = () => {
   const fetchProcedures = async () => {
     setIsLoadingProcedures(true);
     try {
-      const response = await fetch('http://localhost:3001/api/procedures');
+      const response = await get('/api/procedures');
       if (response.ok) {
         const data = await response.json();
         // Mapear categorias baseadas no nome ou descrição se não vier do banco
@@ -57,7 +58,7 @@ const Store: React.FC = () => {
   const fetchProducts = async () => {
     setIsLoadingProducts(true);
     try {
-      const response = await fetch('http://localhost:3001/api/products');
+      const response = await get('/api/products');
       if (response.ok) {
         const data = await response.json();
         const mapped = data.map((p: any) => ({

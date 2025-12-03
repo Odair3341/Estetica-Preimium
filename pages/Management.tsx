@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { Procedure, Client, PurchaseHistory, Product } from '../types';
+import { get } from '../utils/api';
 
 const Management: React.FC = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ const Management: React.FC = () => {
   const fetchClientHistory = async (clientId: number) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/purchase-history/client/${clientId}`);
+      const res = await get(`/api/purchase-history/client/${clientId}`);
       const data = await res.json();
       setHistoryList(data);
     } catch (e) {
@@ -106,7 +107,7 @@ const Management: React.FC = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/clients');
+      const res = await get('/api/clients');
       const data = await res.json();
       setClients(data);
     } catch (e) {
@@ -116,7 +117,7 @@ const Management: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/products');
+      const res = await get('/api/products');
       const data = await res.json();
       setProducts(data);
     } catch (e) {
@@ -126,7 +127,7 @@ const Management: React.FC = () => {
 
   const fetchProcedures = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/procedures');
+      const res = await get('/api/procedures');
       const data = await res.json();
       setProcedures(data);
     } catch (e) {
@@ -357,10 +358,17 @@ const Management: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowClientHistory(null)}>
           <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Histórico de {showClientHistory.name}</h2>
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">history</span>
+                Histórico de {showClientHistory.name}
+              </h2>
               <button onClick={() => setShowClientHistory(null)} className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200">
                 <span className="material-symbols-outlined">close</span>
               </button>
+            </div>
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm text-zinc-500 dark:text-zinc-400">Total comprado: <span className="font-bold text-primary">R$ {Number(historyList.reduce((s, h) => s + Number(h.amount), 0)).toFixed(2)}</span></div>
+              <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{historyList.length} itens</div>
             </div>
 
             {/* Packages Section */}
@@ -402,14 +410,18 @@ const Management: React.FC = () => {
                 <div className="text-center py-8 text-zinc-500">Sem compras registradas</div>
               ) : (
                 historyList.map(h => (
-                  <div key={h.id as any} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                    <div>
-                      <p className="font-medium text-zinc-900 dark:text-white">
-                        {h.type === 'product'
-                          ? (products.find(p => p.id === String(h.product_id))?.name || `Produto #${h.product_id}`)
-                          : (procedures.find(p => p.id === Number(h.service_id))?.name || `Serviço #${h.service_id}`)}
-                      </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.date}</p>
+                  <div 
+                    key={h.id as any} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-3">
+                      <span className={`material-symbols-outlined ${h.type === 'product' ? 'text-primary' : 'text-secondary'}`}>{h.type === 'product' ? 'shopping_bag' : 'spa'}</span>
+                      <div>
+                        <p className="font-medium text-zinc-900 dark:text-white">
+                          {h.type === 'product' 
+                            ? (products.find(p => p.id === String(h.product_id))?.name || `Produto #${h.product_id}`)
+                            : (procedures.find(p => p.id === Number(h.service_id))?.name || `Serviço #${h.service_id}`)}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.date}</p>
+                      </div>
                     </div>
                     <div className={`font-bold ${h.type === 'product' ? 'text-primary' : 'text-secondary'}`}>R$ {Number(h.amount).toFixed(2)}</div>
                   </div>
