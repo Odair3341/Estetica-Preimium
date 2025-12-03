@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { 
+import {
   query, // Importar query para uso direto nas rotas customizadas
-  getUsers, 
-  getUserByEmail, 
+  getUsers,
+  getUserByEmail,
   createUser,
   getClients,
   getClientById,
@@ -22,7 +22,8 @@ import {
   createPurchaseHistory,
   getAppointments,
   getAppointmentsByClientId,
-  createAppointment
+  createAppointment,
+  getClientPackages
 } from '../utils/db';
 
 const app = express();
@@ -80,7 +81,7 @@ app.get('/api/clients/search', async (req, res) => {
   }
   try {
     const result = await query(
-      'SELECT * FROM clients WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1 LIMIT 10', 
+      'SELECT * FROM clients WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1 LIMIT 10',
       [`%${queryStr}%`]
     );
     res.json(result.rows);
@@ -109,6 +110,15 @@ app.post('/api/clients', async (req, res) => {
     res.status(201).json(client);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao criar cliente' });
+  }
+});
+
+app.get('/api/clients/:id/packages', async (req, res) => {
+  try {
+    const packages = await getClientPackages(parseInt(req.params.id));
+    res.json(packages);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar pacotes do cliente' });
   }
 });
 
@@ -230,7 +240,7 @@ app.get('/api/purchase-history/client/:clientId', async (req, res) => {
 app.post('/api/purchase-history', async (req, res) => {
   try {
     const history = await createPurchaseHistory(req.body);
-  res.status(201).json(history);
+    res.status(201).json(history);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao criar registro no histórico de compras' });
   }
