@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
-import { PROCEDURES, CLIENTS, PURCHASE_HISTORY, PRODUCTS } from '../constants';
 import { Procedure, Client, PurchaseHistory, Product } from '../types';
 
 const Management: React.FC = () => {
@@ -9,6 +8,11 @@ const Management: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'procedures' | 'products' | 'clients' | 'history'>('procedures');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showClientHistory, setShowClientHistory] = useState<Client | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [historyList, setHistoryList] = useState<PurchaseHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Estados para formulários
   const [newProcedure, setNewProcedure] = useState<Omit<Procedure, 'id'>>({
@@ -74,9 +78,55 @@ const Management: React.FC = () => {
     });
   };
 
-  const getClientHistory = (clientId: string) => {
-    return PURCHASE_HISTORY.filter(history => history.clientId === clientId);
+  const fetchClientHistory = async (clientId: number) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/purchase-history/client/${clientId}`);
+      const data = await res.json();
+      setHistoryList(data);
+    } catch (e) {
+      console.error('Erro ao carregar histórico do cliente:', e);
+      setHistoryList([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/clients');
+      const data = await res.json();
+      setClients(data);
+    } catch (e) {
+      console.error('Erro ao carregar clientes:', e);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/products');
+      const data = await res.json();
+      setProducts(data);
+    } catch (e) {
+      console.error('Erro ao carregar produtos:', e);
+    }
+  };
+
+  const fetchProcedures = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/procedures');
+      const data = await res.json();
+      setProcedures(data);
+    } catch (e) {
+      console.error('Erro ao carregar procedimentos:', e);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchClients();
+    fetchProducts();
+    fetchProcedures();
+  }, []);
 
   const getProductName = (productId?: string) => {
     if (!productId) return '';
@@ -151,14 +201,14 @@ const Management: React.FC = () => {
         {activeTab === 'procedures' && (
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Procedimentos</h2>
-            {PROCEDURES.length === 0 ? (
+            {procedures.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-50">
                 <span className="material-symbols-outlined text-5xl mb-2">spa</span>
                 <p>Nenhum procedimento cadastrado</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {PROCEDURES.map(procedure => (
+                {procedures.map(procedure => (
                   <div 
                     key={procedure.id} 
                     className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800"
@@ -170,7 +220,7 @@ const Management: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right font-bold text-primary">
-                      R$ {procedure.price.toFixed(2)}
+                      R$ {Number(procedure.price).toFixed(2)}
                     </div>
                   </div>
                 ))}
@@ -182,14 +232,14 @@ const Management: React.FC = () => {
         {activeTab === 'products' && (
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Produtos</h2>
-            {PRODUCTS.length === 0 ? (
+            {products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-50">
                 <span className="material-symbols-outlined text-5xl mb-2">shopping_bag</span>
                 <p>Nenhum produto cadastrado</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                {PRODUCTS.map(product => (
+                {products.map(product => (
                   <div 
                     key={product.id} 
                     className="flex flex-col bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden"
@@ -202,7 +252,7 @@ const Management: React.FC = () => {
                       <p className="font-medium text-zinc-900 dark:text-white text-sm">{product.name}</p>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{product.category}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+                        <span className="font-bold text-primary">R$ {Number(product.price).toFixed(2)}</span>
                         {product.isNew && (
                           <span className="text-xs bg-secondary text-white px-2 py-1 rounded-full">Novo</span>
                         )}
@@ -218,14 +268,14 @@ const Management: React.FC = () => {
         {activeTab === 'clients' && (
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Clientes</h2>
-            {CLIENTS.length === 0 ? (
+            {clients.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-50">
                 <span className="material-symbols-outlined text-5xl mb-2">group</span>
                 <p>Nenhum cliente cadastrado</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {CLIENTS.map(client => (
+                {clients.map(client => (
                   <div 
                     key={client.id} 
                     className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800"
@@ -241,7 +291,7 @@ const Management: React.FC = () => {
                         {client.loyaltyPoints} pts
                       </span>
                       <button 
-                        onClick={() => setShowClientHistory(client)}
+                        onClick={() => { setShowClientHistory(client); fetchClientHistory(client.id as unknown as number); }}
                         className="p-2 text-zinc-500 hover:text-primary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"
                       >
                         <span className="material-symbols-outlined text-lg">history</span>
@@ -257,14 +307,14 @@ const Management: React.FC = () => {
         {activeTab === 'history' && (
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Histórico de Compras</h2>
-            {PURCHASE_HISTORY.length === 0 ? (
+            {historyList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-50">
                 <span className="material-symbols-outlined text-5xl mb-2">receipt_long</span>
                 <p>Nenhum histórico de compras</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {PURCHASE_HISTORY.map(history => (
+                {historyList.map(history => (
                   <div 
                     key={history.id} 
                     className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800"
@@ -272,15 +322,15 @@ const Management: React.FC = () => {
                     <div className="flex flex-col">
                       <p className="font-medium text-zinc-900 dark:text-white">
                         {history.type === 'product' 
-                          ? getProductName(history.productId) 
-                          : getServiceName(history.serviceId)}
+                          ? (products.find(p => p.id === String(history.product_id))?.name || `Produto #${history.product_id}`)
+                          : (procedures.find(p => p.id === Number(history.service_id))?.name || `Serviço #${history.service_id}`)}
                       </p>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
                         {history.date} • {history.type === 'product' ? 'Produto' : 'Serviço'}
                       </p>
                     </div>
                     <div className={`text-right font-bold ${history.type === 'product' ? 'text-primary' : 'text-secondary'}`}>
-                      R$ {history.amount.toFixed(2)}
+                      R$ {Number(history.amount).toFixed(2)}
                     </div>
                   </div>
                 ))}
@@ -291,6 +341,39 @@ const Management: React.FC = () => {
       </main>
 
       {/* Add Modal */}
+      {showClientHistory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowClientHistory(null)}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Histórico de {showClientHistory.name}</h2>
+              <button onClick={() => setShowClientHistory(null)} className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="flex flex-col gap-3">
+              {isLoading ? (
+                <div className="text-center py-8 text-zinc-500">Carregando...</div>
+              ) : historyList.length === 0 ? (
+                <div className="text-center py-8 text-zinc-500">Sem compras registradas</div>
+              ) : (
+                historyList.map(h => (
+                  <div key={h.id as any} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-white">
+                        {h.type === 'product' 
+                          ? (products.find(p => p.id === String(h.product_id))?.name || `Produto #${h.product_id}`)
+                          : (procedures.find(p => p.id === Number(h.service_id))?.name || `Serviço #${h.service_id}`)}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.date}</p>
+                    </div>
+                    <div className={`font-bold ${h.type === 'product' ? 'text-primary' : 'text-secondary'}`}>R$ {Number(h.amount).toFixed(2)}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md p-6">

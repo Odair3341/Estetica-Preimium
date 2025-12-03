@@ -1,22 +1,39 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
-import { UPCOMING_APPOINTMENTS, CURRENT_USER, PRODUCTS, FINANCIAL_ENTRIES } from '../constants';
+import { CURRENT_USER } from '../constants';
 import FinanceCard from '../components/FinanceCard';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
-  // Calculate financial summary
   const today = new Date().toISOString().split('T')[0];
-  const todayEntries = FINANCIAL_ENTRIES.filter(entry => entry.date === today);
-  const totalIncome = todayEntries
-    .filter(entry => entry.type === 'income')
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const totalExpenses = todayEntries
-    .filter(entry => entry.type === 'expense')
-    .reduce((sum, entry) => sum + entry.amount, 0);
+  const [appointments, setAppointments] = React.useState<any[]>([]);
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = React.useState<any[]>([]);
+  const totalIncome = purchaseHistory
+    .filter((h) => h.date === today)
+    .reduce((sum, h) => sum + Number(h.amount), 0);
+  const totalExpenses = 0;
   const balance = totalIncome - totalExpenses;
+
+  React.useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const [aptsRes, productsRes, historyRes] = await Promise.all([
+          fetch('http://localhost:3001/api/appointments'),
+          fetch('http://localhost:3001/api/products'),
+          fetch('http://localhost:3001/api/purchase-history')
+        ]);
+        setAppointments(await aptsRes.json());
+        setProducts(await productsRes.json());
+        setPurchaseHistory(await historyRes.json());
+      } catch (e) {
+        console.error('Erro ao carregar dados do Dashboard:', e);
+      }
+    };
+    fetchAll();
+  }, []);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col pb-20">
@@ -124,7 +141,7 @@ const Dashboard: React.FC = () => {
           </div>
           
           <div className="space-y-3">
-            {UPCOMING_APPOINTMENTS.slice(0, 2).map((apt) => (
+            {appointments.filter((a) => a.status === 'upcoming').slice(0, 2).map((apt) => (
               <div 
                 key={apt.id} 
                 onClick={() => navigate('/schedule')}
@@ -132,15 +149,15 @@ const Dashboard: React.FC = () => {
               >
                 <div className="flex items-center gap-4">
                   <div className="flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2 min-w-[3.5rem]">
-                    <span className="text-xs font-bold text-zinc-500 uppercase">{apt.date.includes('Amanhã') ? 'HOJE' : 'JUL'}</span>
-                    <span className="text-lg font-black text-zinc-800 dark:text-white">{apt.time.split(':')[0]}</span>
+                    <span className="text-xs font-bold text-zinc-500 uppercase">{apt.date}</span>
+                    <span className="text-lg font-black text-zinc-800 dark:text-white">{(apt.time || '').split(':')[0]}</span>
                   </div>
                   <div className="flex flex-1 flex-col justify-center">
                     <p className="text-zinc-900 dark:text-white text-base font-bold leading-normal">
-                      {apt.serviceName}
+                      {apt.procedure_id ? `Procedimento #${apt.procedure_id}` : 'Serviço'}
                     </p>
                     <p className="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal flex items-center gap-1">
-                      {apt.professionalName}
+                      {apt.professional_name || 'Profissional'}
                     </p>
                   </div>
                 </div>
@@ -163,7 +180,7 @@ const Dashboard: React.FC = () => {
           </div>
           
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
-            {PRODUCTS.slice(0, 4).map((product) => (
+            {products.slice(0, 4).map((product) => (
               <div 
                 key={product.id} 
                 className="min-w-[160px] bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm border border-zinc-100 dark:border-zinc-800/50 cursor-pointer group"
@@ -181,7 +198,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-zinc-900 dark:text-white text-sm font-bold truncate">{product.name}</p>
                   <p className="text-zinc-500 dark:text-zinc-400 text-xs">{product.category}</p>
                   <div className="flex items-center justify-between mt-2">
-                     <p className="text-primary font-bold text-sm">R$ {product.price.toFixed(2)}</p>
+                     <p className="text-primary font-bold text-sm">R$ {Number(product.price).toFixed(2)}</p>
                      <div className="size-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-primary">
                         <span className="material-symbols-outlined text-xs">add</span>
                      </div>

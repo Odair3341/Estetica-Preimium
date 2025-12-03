@@ -1,12 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
-import { UPCOMING_APPOINTMENTS, PAST_APPOINTMENTS } from '../constants';
+import { Appointment } from '../types';
 import AppointmentCard from '../components/AppointmentCard';
 
 const Schedule: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    const fetchAppointments = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch('http://localhost:3001/api/appointments');
+        const data = await res.json();
+        setAppointments(data);
+      } catch (e) {
+        console.error('Erro ao carregar agendamentos:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
 
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col pb-24">
@@ -40,16 +58,28 @@ const Schedule: React.FC = () => {
       <main className="flex-grow p-4 flex flex-col gap-4">
         {activeTab === 'upcoming' ? (
           <>
-            {UPCOMING_APPOINTMENTS.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                <span className="material-symbols-outlined text-5xl mb-2">hourglass</span>
+                <p>Carregando...</p>
+              </div>
+            ) : appointments.filter(a => a.status === 'upcoming').length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-50">
                 <span className="material-symbols-outlined text-5xl mb-2">event_busy</span>
                 <p>Nenhum agendamento futuro</p>
               </div>
             ) : (
-              UPCOMING_APPOINTMENTS.map(apt => (
+              appointments.filter(a => a.status === 'upcoming').map(apt => (
                 <AppointmentCard 
                   key={apt.id} 
-                  appointment={apt} 
+                  appointment={{
+                    id: String(apt.id),
+                    serviceName: apt.procedure_id ? `Procedimento #${apt.procedure_id}` : 'Serviço',
+                    date: apt.date,
+                    time: apt.time,
+                    professionalName: apt.professional_name || 'Profissional',
+                    price: Number(apt.price || 0)
+                  } as any} 
                   onClick={() => navigate('/booking')} 
                 />
               ))
@@ -65,13 +95,32 @@ const Schedule: React.FC = () => {
           </>
         ) : (
           <div className="flex flex-col gap-4">
-            {PAST_APPOINTMENTS.map(apt => (
-              <AppointmentCard 
-                key={apt.id} 
-                appointment={apt} 
-                isPast={true} 
-              />
-            ))}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                <span className="material-symbols-outlined text-5xl mb-2">hourglass</span>
+                <p>Carregando...</p>
+              </div>
+            ) : appointments.filter(a => a.status !== 'upcoming').length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                <span className="material-symbols-outlined text-5xl mb-2">history</span>
+                <p>Sem histórico</p>
+              </div>
+            ) : (
+              appointments.filter(a => a.status !== 'upcoming').map(apt => (
+                <AppointmentCard 
+                  key={apt.id as any} 
+                  appointment={{
+                    id: String(apt.id),
+                    serviceName: apt.procedure_id ? `Procedimento #${apt.procedure_id}` : 'Serviço',
+                    date: apt.date,
+                    time: apt.time,
+                    professionalName: apt.professional_name || 'Profissional',
+                    price: Number(apt.price || 0)
+                  } as any}
+                  isPast={true}
+                />
+              ))
+            )}
           </div>
         )}
       </main>

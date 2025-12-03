@@ -149,4 +149,23 @@ export const createPurchaseHistory = async (historyData: { client_id: number; pr
   return result.rows[0];
 };
 
+// Agendamentos
+export const getAppointments = async () => {
+  const result = await query('SELECT * FROM appointments ORDER BY date DESC, time DESC');
+  return result.rows;
+};
+
+export const getAppointmentsByClientId = async (clientId: number) => {
+  const result = await query('SELECT * FROM appointments WHERE client_id = $1 ORDER BY date DESC, time DESC', [clientId]);
+  return result.rows;
+};
+
+export const createAppointment = async (aptData: { client_id: number; procedure_id: number; professional_name: string; date: string; time: string; status: 'upcoming' | 'completed' | 'cancelled'; price?: number }) => {
+  const result = await query(
+    'INSERT INTO appointments (client_id, procedure_id, professional_name, date, time, status, price) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+    [aptData.client_id, aptData.procedure_id, aptData.professional_name, aptData.date, aptData.time, aptData.status, aptData.price]
+  );
+  return result.rows[0];
+};
+
 export default pool;

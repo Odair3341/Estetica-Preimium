@@ -13,6 +13,10 @@ const Cart: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<string>('');
+  const [scheduleTime, setScheduleTime] = useState<string>('');
+  const [scheduleProfessional, setScheduleProfessional] = useState<string>('');
 
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
@@ -114,6 +118,24 @@ const Cart: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(bodyData)
         });
+
+        // Se for serviço e agendamento estiver habilitado, criar agendamento
+        if (item.type === 'service' && scheduleEnabled && scheduleDate && scheduleTime && scheduleProfessional) {
+          const aptPayload = {
+            client_id: selectedClient.id,
+            procedure_id: parseInt(item.id),
+            professional_name: scheduleProfessional,
+            date: scheduleDate,
+            time: scheduleTime,
+            status: 'upcoming' as const,
+            price: item.price
+          };
+          await fetch('http://localhost:3001/api/appointments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(aptPayload)
+          });
+        }
       }
 
       setShowSuccess(true);
@@ -232,6 +254,41 @@ const Cart: React.FC = () => {
                 </div>
               )}
             </section>
+
+            {/* Agendamento (para serviços) */}
+            {items.some(i => i.type === 'service') && (
+              <section className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800/50">
+                <h3 className="font-bold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">event</span>
+                  Agendamento do Serviço
+                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Criar agendamento ao finalizar</p>
+                  <button
+                    onClick={() => setScheduleEnabled(!scheduleEnabled)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold border ${scheduleEnabled ? 'bg-primary text-white border-primary' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'}`}
+                  >
+                    {scheduleEnabled ? 'Ativado' : 'Desativado'}
+                  </button>
+                </div>
+                {scheduleEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Data</label>
+                      <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Hora</label>
+                      <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">Profissional</label>
+                      <input type="text" value={scheduleProfessional} onChange={(e) => setScheduleProfessional(e.target.value)} placeholder="Nome do profissional" className="w-full p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white" />
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Lista de Itens */}
             <div className="flex flex-col gap-4">

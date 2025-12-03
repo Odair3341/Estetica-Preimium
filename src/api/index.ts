@@ -19,7 +19,10 @@ import {
   createFinancialEntry,
   getPurchaseHistory,
   getPurchaseHistoryByClientId,
-  createPurchaseHistory
+  createPurchaseHistory,
+  getAppointments,
+  getAppointmentsByClientId,
+  createAppointment
 } from '../utils/db';
 
 const app = express();
@@ -227,9 +230,37 @@ app.get('/api/purchase-history/client/:clientId', async (req, res) => {
 app.post('/api/purchase-history', async (req, res) => {
   try {
     const history = await createPurchaseHistory(req.body);
-    res.status(201).json(history);
+  res.status(201).json(history);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao criar registro no histórico de compras' });
+  }
+});
+
+// Rotas para Agendamentos
+app.get('/api/appointments', async (req, res) => {
+  try {
+    const apts = await getAppointments();
+    res.json(apts);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+});
+
+app.get('/api/appointments/client/:clientId', async (req, res) => {
+  try {
+    const apts = await getAppointmentsByClientId(parseInt(req.params.clientId));
+    res.json(apts);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar agendamentos do cliente' });
+  }
+});
+
+app.post('/api/appointments', async (req, res) => {
+  try {
+    const apt = await createAppointment(req.body);
+    res.status(201).json(apt);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao criar agendamento' });
   }
 });
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
-import { PRODUCTS } from '../constants';
 import { Product, CartItem, Procedure } from '../types';
 import ProductCard from '../components/ProductCard';
 
@@ -14,6 +13,8 @@ const Store: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [isLoadingProcedures, setIsLoadingProcedures] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   const productCategories = ['Todos', 'Vestidos', 'Blusas', 'Calças', 'Conjuntos', 'Cosméticos'];
   const serviceCategories = ['Todos', 'Facial', 'Corporal', 'Injetáveis', 'Unhas'];
@@ -29,6 +30,8 @@ const Store: React.FC = () => {
 
     // Fetch procedures from API
     fetchProcedures();
+    // Fetch products from API
+    fetchProducts();
   }, []);
 
   const fetchProcedures = async () => {
@@ -51,6 +54,21 @@ const Store: React.FC = () => {
     }
   };
 
+  const fetchProducts = async () => {
+    setIsLoadingProducts(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/products');
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
   const determineCategory = (name: string): string => {
     const lower = name.toLowerCase();
     if (lower.includes('pele') || lower.includes('facial') || lower.includes('peeling')) return 'Facial';
@@ -61,8 +79,8 @@ const Store: React.FC = () => {
   };
 
   const filteredProducts = filter === 'Todos' 
-    ? PRODUCTS 
-    : PRODUCTS.filter(p => p.category === filter);
+    ? products 
+    : products.filter(p => p.category === filter);
 
   const filteredProcedures = filter === 'Todos'
     ? procedures
@@ -173,13 +191,19 @@ const Store: React.FC = () => {
       <main className="flex-grow p-4">
         {activeTab === 'products' ? (
             <div className="grid grid-cols-2 gap-4">
-                {filteredProducts.map((product) => (
-                <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onAddToCart={(p) => addToCart(p, 'product')} 
-                />
-                ))}
+                {isLoadingProducts ? (
+                  <div className="col-span-2 text-center py-10 text-zinc-500">Carregando produtos...</div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="col-span-2 text-center py-10 text-zinc-500">Nenhum produto encontrado.</div>
+                ) : (
+                  filteredProducts.map((product) => (
+                    <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        onAddToCart={(p) => addToCart(p, 'product')} 
+                    />
+                  ))
+                )}
             </div>
         ) : (
             <div className="flex flex-col gap-3">

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
-import { FINANCIAL_ENTRIES, CASH_REGISTERS } from '../constants';
 import { FinancialEntry } from '../types';
 import FinanceCard from '../components/FinanceCard';
 import FinanceEntryCard from '../components/FinanceEntryCard';
@@ -23,11 +22,20 @@ const Finance: React.FC = () => {
     source: 'esthetic'
   });
 
-  // Load financial entries from localStorage or use defaults
-  const [financialEntries, setFinancialEntries] = useState<FinancialEntry[]>(() => {
-    const savedEntries = localStorage.getItem('financialEntries');
-    return savedEntries ? JSON.parse(savedEntries) : FINANCIAL_ENTRIES;
-  });
+  const [financialEntries, setFinancialEntries] = useState<FinancialEntry[]>([]);
+
+  React.useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/financial-entries');
+        const data = await res.json();
+        setFinancialEntries(data);
+      } catch (e) {
+        console.error('Erro ao carregar lançamentos financeiros:', e);
+      }
+    };
+    fetchEntries();
+  }, []);
 
   const today = new Date().toISOString().split('T')[0];
   const todayEntries = financialEntries.filter(entry => entry.date === today);
@@ -39,30 +47,40 @@ const Finance: React.FC = () => {
     .reduce((sum, entry) => sum + entry.amount, 0);
   const balance = totalIncome - totalExpenses;
 
-  const handleAddEntry = () => {
-    // Create new entry with unique ID
-    const entryToAdd: FinancialEntry = {
-      ...newEntry,
-      id: `entry_${Date.now()}`
-    };
-    
-    // Update state
-    const updatedEntries = [...financialEntries, entryToAdd];
-    setFinancialEntries(updatedEntries);
-    
-    // Save to localStorage
-    localStorage.setItem('financialEntries', JSON.stringify(updatedEntries));
-    
-    // Reset form
-    setShowAddModal(false);
-    setNewEntry({
-      type: 'income',
-      category: '',
-      description: '',
-      amount: 0,
-      date: new Date().toISOString().split('T')[0],
-      source: 'esthetic'
-    });
+  const handleAddEntry = async () => {
+    try {
+      const payload = {
+        type: newEntry.type,
+        category: newEntry.category || 'Outros',
+        description: newEntry.description,
+        amount: Number(newEntry.amount),
+        date: new Date(newEntry.date),
+        source: newEntry.source || 'esthetic'
+      };
+      const res = await fetch('http://localhost:3001/api/financial-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setFinancialEntries([...financialEntries, created]);
+        setShowAddModal(false);
+        setNewEntry({
+          type: 'income',
+          category: '',
+          description: '',
+          amount: 0,
+          date: new Date().toISOString().split('T')[0],
+          source: 'esthetic'
+        });
+      } else {
+        alert('Falha ao criar lançamento');
+      }
+    } catch (e) {
+      console.error('Erro ao criar lançamento:', e);
+      alert('Erro ao criar lançamento');
+    }
   };
 
   const handleEditEntry = (entry: FinancialEntry) => {
@@ -87,7 +105,6 @@ const Finance: React.FC = () => {
     );
     
     setFinancialEntries(updatedEntries);
-    localStorage.setItem('financialEntries', JSON.stringify(updatedEntries));
     
     // Reset form
     setShowEditModal(false);
@@ -105,7 +122,6 @@ const Finance: React.FC = () => {
   const handleDeleteEntry = (id: string) => {
     const updatedEntries = financialEntries.filter(entry => entry.id !== id);
     setFinancialEntries(updatedEntries);
-    localStorage.setItem('financialEntries', JSON.stringify(updatedEntries));
   };
 
   return (
