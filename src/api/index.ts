@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { 
+  query, // Importar query para uso direto nas rotas customizadas
   getUsers, 
   getUserByEmail, 
   createUser,
@@ -65,6 +66,23 @@ app.get('/api/clients', async (req, res) => {
     const clients = await getClients();
     res.json(clients);
   } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar clientes' });
+  }
+});
+
+app.get('/api/clients/search', async (req, res) => {
+  const queryStr = req.query.q as string;
+  if (!queryStr) {
+    return res.status(400).json({ error: 'Parâmetro de busca "q" é obrigatório' });
+  }
+  try {
+    const result = await query(
+      'SELECT * FROM clients WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1 LIMIT 10', 
+      [`%${queryStr}%`]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro na busca de clientes:', error);
     res.status(500).json({ error: 'Erro ao buscar clientes' });
   }
 });
