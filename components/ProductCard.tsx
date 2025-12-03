@@ -39,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           <h3 className="text-sm font-bold text-zinc-900 dark:text-white leading-tight mb-1 line-clamp-2">{product.name}</h3>
         </div>
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-base font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+          <span className="text-base font-bold text-primary">R$ {Number(product.price).toFixed(2)}</span>
         </div>
       </div>
     </div>

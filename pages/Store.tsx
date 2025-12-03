@@ -60,7 +60,15 @@ const Store: React.FC = () => {
       const response = await fetch('http://localhost:3001/api/products');
       if (response.ok) {
         const data = await response.json();
-        setProducts(data);
+        const mapped = data.map((p: any) => ({
+          id: String(p.id),
+          name: p.name,
+          price: Number(p.price),
+          category: p.category,
+          imageUrl: p.image_url,
+          isNew: !!p.is_new
+        }));
+        setProducts(mapped);
       }
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
